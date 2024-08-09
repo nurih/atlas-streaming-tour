@@ -29,19 +29,19 @@ The output is periodic documents that look like this:
 
 ```json
 {
-  device_id: 'device_1',
-  group_id: 1,
-  timestamp: '2024-08-08T23:08:02.881+00:00',
-  max_watts: 450,
-  event_type: 0,
-  obs: {
-    watts: 6,
-    temp: 24
+  "device_id": "device_1",
+  "group_id": 1,
+  "timestamp": "2024-08-08T23:08:02.881+00:00",
+  "max_watts": 450,
+  "event_type": 0,
+  "obs": {
+    "watts": 6,
+    "temp": 24
   },
-  _ts: ISODate('2024-08-08T23:08:02.881Z'),
-  _stream_meta: {
-    source: {
-      type: 'generated'
+  "_ts": ISODate("2024-08-08T23:08:02.881Z"),
+  "_stream_meta": {
+    "source": {
+      "type": "generated"
     }
   }
 }

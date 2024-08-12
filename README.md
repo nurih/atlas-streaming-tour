@@ -10,6 +10,8 @@
     |--- |--- |
     |`MyOutputGoesHere`| A connection for the final output of the stream processor. This is where data will end up.|
     |`MyInputComesFromHere`| A connection for the source stream events. This is where the stream processor picks up events.|
+    |`sample_stream_solar` | A connection to a built in random sample event generator that simulates an IOT device. Usefull for testing and learning|
+
 1. Using `mongosh` (version 2 or above), connect to the stream processor endpoint. To get the connection string, click the `Connect` button in Atlas under the **Connect** button, and grab the connection URL.
     > The shell connects to the Stream Processing Service, not the database cluster.
 
@@ -107,7 +109,7 @@ let finalOutput = {
   $merge: {
     into: {
       connectionName: "MyOutputGoesHere",
-      db: "test",
+      db: "demo",
       coll: "groupTempStatsFromStreamProcessor"
     }
   }
@@ -138,3 +140,15 @@ myProcessor.stop();
 myProcessor.drop();
 
 ```
+
+## Dead Letter Queue
+
+Data just appears in the output queue, processed to perfection. Yeah, right...
+
+There can be a issues with event data coming from the input stream. If an event is consumed from the source, but cannot be processed to perfection, the stream processor needs to do something with it. This is especially apparent in case of late. If a source event is not processable, it would be wrong to include it in the window calculation. It would be dangerous to just ignore it. But the place for it is probably not the output stream. After all, who wants mangled data co-mingled with good data?
+
+This is where the Dead Letter Queue (**DLQ**) comes in. DLQ lets you direct source events not matching expectations or otherwise unprocessable to a collection of your choice.
+
+> Note a message is discarded to **DLQ** on a best effort basis. It is _not transactionally guaranteed_!
+
+Check out the demo script in the [file named dlq.js](dlq.js)

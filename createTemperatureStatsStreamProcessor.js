@@ -41,10 +41,10 @@ let finalOutput = {
   $merge: {
     into: {
       connectionName: "MyOutputGoesHere",
-      db: "test",
+      db: "demo",
       coll: "groupTempStatsFromStreamProcessor"
     }
   }
 }
 
-let processor = sp.createStreamProcessor("myGroupTempStatsProcessor", [sourceStream, timeWindowPipeline, finalOutput])
+let processor = sp.createStreamProcessor("myGroupTempStatsProcessor", [sourceStream, calculate, finalOutput])

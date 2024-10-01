@@ -68,6 +68,7 @@ let calculate = {
       size: NumberInt(3),
       unit: "second"
     },
+    idleTimeout : {size : 1, unit : "second"},
     pipeline: [
       {
         $group: {

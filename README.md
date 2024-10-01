@@ -6,6 +6,7 @@
 1. Create a stream processing service instance. Click the **Create instance** button. I named mine **stream-processing-service**.
     > This only provisions the service. Noting runs until you start a processor, which spins up runtime(s) to execute.
 1. Add a _source connection_ to the service - at least one is needed. Hit the **Configure** button, then the **Connection Registry** tab. The connection tells the service where stream events are coming from.
+
     |Connection | Purpose |
     |--- |--- |
     |`MyOutputGoesHere`| A connection for the final output of the stream processor. This is where data will end up.|
@@ -15,7 +16,7 @@
 1. Using `mongosh` (version 2 or above), connect to the stream processor endpoint. To get the connection string, click the `Connect` button in Atlas under the **Connect** button, and grab the connection URL.
     > The shell connects to the Stream Processing Service, not the database cluster.
 
-### In-Process Stream Consumption
+### In-Shell Stream Consumption
 
 A sample stream with events is available if you regiestered an example connection. It is named `sample_stream_solar`.
 
@@ -145,10 +146,35 @@ myProcessor.drop();
 
 Data just appears in the output queue, processed to perfection. Yeah, right...
 
-There can be a issues with event data coming from the input stream. If an event is consumed from the source, but cannot be processed to perfection, the stream processor needs to do something with it. This is especially apparent in case of late. If a source event is not processable, it would be wrong to include it in the window calculation. It would be dangerous to just ignore it. But the place for it is probably not the output stream. After all, who wants mangled data co-mingled with good data?
+There can be a issues with event data coming from the input stream. If an event is consumed from the source, but cannot be processed to perfection, the stream processor needs to do something with it. This is especially apparent in case of late. If a source event is corrupted or otherwise non-processable, it would be wrong to include it in the window calculation. It would be dangerous to just ignore it. But the place for it is probably not the output stream. After all, who wants mangled data co-mingled with good data?
 
 This is where the Dead Letter Queue (**DLQ**) comes in. DLQ lets you direct source events not matching expectations or otherwise unprocessable to a collection of your choice.
 
 > Note a message is discarded to **DLQ** on a best effort basis. It is _not transactionally guaranteed_!
 
 Check out the demo script in the [file named dlq.js](dlq.js)
+
+
+## Deterministic Handling
+
+By design, stream processing is deterministic. Given a sequence of inputs, processing of such inputs should yield the same output if replayed verbatim. For that reason, a window will not close on its own. A following event, with a higher timestamp exceeding the current window must be seen. Intuitively, one might assume that the wall clock is considered here - that if a window of 10 seconds was opened, it would automatically close after 10 seconds time according to the wall clock. This is not the case though: the window will close once an event with a timestamp exceeding its start event-time is seen.
+
+One way to ensure this behavior does not result in a window hanging open for too long, is setting the `idleTimeout` field within the window definition, alongside the `pipeline` and the `interval`.
+
+The example below, a tumbling window of 10 seconds is defined, and the `idleTimeout` is set to 20 seconds. 
+
+```json
+{
+  $tumblingWindow: {
+    interval: {
+      size: NumberInt(10),
+      unit: "second"
+    },
+    idleTimeout : {size : 20, unit : "second"},
+    pipeline: [ ...]
+  }
+}
+```
+
+The effect of this is that a window open at time _t0_ would be closed and emitted if an input event arrives any time after _t0 +10sec_. But if such later event arrives, the window closes at _t0 + 20sec_.
+

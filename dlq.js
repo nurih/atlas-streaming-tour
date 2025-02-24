@@ -19,14 +19,14 @@ try {
 catch (e) { print(`Can't drop "${PROCESSOR_NAME}"...`) }
 
 let mockDocs = [
-  { x: 0 }, // small
-  { x: 1 },
-  { x: 3.14 }, // non-int
-  { x: 2 },
-  { x: "22" }, // non-int
-  { x: 3 },
-  { text: 'yo' }, // non-existent
-  { x: 4 },
+  { d: ISODate('2000-04-01T00:00:01'), x: 0 }, // small
+  { d: ISODate('2000-04-01T00:00:02'), x: 1 },
+  { d: ISODate('2000-04-01T00:00:03'), x: 3.14 }, // non-int
+  { d: ISODate('2000-04-01T00:00:04'), x: 2 },
+  { d: ISODate('2000-04-01T00:00:05'), x: "22" }, // non-int
+  { d: ISODate('2000-04-01T00:00:06'), x: 3 },
+  { d: ISODate('2000-04-01T00:00:07'), text: 'yo' }, // non-existent
+  { d: ISODate('2000-04-01T00:00:08'), x: 4 },
 ]
 
 /***
@@ -36,7 +36,8 @@ let mockDocs = [
 // An inline source of documents from the mock documents array
 let sourceStream = {
   $source: {
-    documents: mockDocs
+    documents: mockDocs,
+    timeField: '$d' // the field containing the event time reference. Necessary for closing the window.
   }
 }
 
@@ -68,7 +69,7 @@ let calculate = {
       size: NumberInt(3),
       unit: "second"
     },
-    idleTimeout : {size : 1, unit : "second"},
+    idleTimeout: { size: 1, unit: "second" },
     pipeline: [
       {
         $group: {
@@ -110,7 +111,7 @@ let create = () => sp.createStreamProcessor(
 );
 
 // Start it:
-// processor = create(); processor.start(); 
+// processor = create(); processor.start();
 
-// Or: 
+// Or:
 // create().start();
